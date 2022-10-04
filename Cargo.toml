@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
+  "crates/coordinator_zomes/*",
   "crates/integrity_zomes/*",
-  "crates/coordinator_zomes/*"
 ]
 
 [profile.dev]

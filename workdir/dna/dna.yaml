@@ -2,7 +2,7 @@
 manifest_version: "1"
 name: cursors
 integrity:
-  uuid: 00000000-0000-0000-0000-000000000000
+  network_seed: 00000000-0000-0000-0000-000000000000
   properties: ~
   origin_time: 2022-10-04T12:43:26.187Z
   zomes:

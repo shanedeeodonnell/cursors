@@ -5,14 +5,15 @@ use hdk::prelude::*;
 // Remote call input
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CursorPayload {
-    pub x: f32,
-    pub y: f32
+  pub agent: AgentPubKey,
+  pub x: f32,
+  pub y: f32
 }
 
-[#hdk_extern]
-pub fun init(_:()) -> ExternResult<InitCallbackresult> {
+#[hdk_extern]
+pub fn init(_:()) -> ExternResult<InitCallbackResult> {
   let mut functions = GrantedFunctions::new();
-  functions.insert((ZomeName::new("cursors"), FunctionName::new("update_cursor")));
+  functions.insert((ZomeName::new("cursors"), FunctionName::new("update_cursor_position")));
   let grant = ZomeCallCapGrant {
       access: CapAccess::Unrestricted,
       functions,
@@ -23,7 +24,7 @@ pub fun init(_:()) -> ExternResult<InitCallbackresult> {
 }
 
 #[hdk_extern]
-pub fn ui_updated(message: String) -> ExternResult<()> {
+pub fn handle_cursor_moved((x, y): (f32, f32)) -> ExternResult<()> {
   // get vec of all profiles
   let response: ZomeCallResponse = call(
       CallTargetCell::Local,
@@ -47,16 +48,19 @@ pub fn ui_updated(message: String) -> ExternResult<()> {
   let this_agent_pub_key: AgentPubKey = agent_info()?.agent_initial_pubkey;
   let other_agent_pub_keys: Vec<AgentPubKey> = all_agent_pub_keys.into_iter().filter(|x| *x != this_agent_pub_key).collect();
 
+  let payload = CursorPayload {
+    agent: this_agent_pub_key,
+    x,
+    y
+  };
+
   for other in other_agent_pub_keys {
-    let payload = SignalPayload {
-        message: message.clone()
-    };
     // debug!("Called agent {:?}", other.clone());
 
     call_remote(
         other,
         ZomeName::new("cursors"),
-        FunctionName::new("update_cursor"),
+        FunctionName::new("update_cursor_position"),
         None,
         payload.clone()
     )?;
@@ -67,7 +71,7 @@ pub fn ui_updated(message: String) -> ExternResult<()> {
 }
 
 #[hdk_extern]
-pub fn update_cursor(payload: SignalPayload)  -> ExternResult<()> {
+pub fn update_cursor_position(payload: CursorPayload)  -> ExternResult<()> {
     emit_signal(payload.clone())?;
     Ok(())
 }

@@ -1,1 +1,1 @@
-extern crate profiles_core;
+extern crate hc_zome_profiles_integrity;
