@@ -1,0 +1,17 @@
+---
+manifest_version: "1"
+name: cursors
+description: ~
+roles:
+
+  - id: cursors
+    provisioning:
+      strategy: create
+      deferred: false
+    dna:
+      bundled: "../dna/cursors.dna"
+      properties: ~
+      uuid: ~
+      version: ~
+      clone_limit: 0
+

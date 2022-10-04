@@ -1,0 +1,7 @@
+---
+manifest_version: "1"
+name: cursors
+ui:
+  bundled: "../ui/dist.zip"
+happ_manifest:
+  bundled: "./cursors.happ"
