@@ -55,7 +55,7 @@ pub fn handle_cursor_moved((x, y): (f32, f32)) -> ExternResult<()> {
   };
 
   for other in other_agent_pub_keys {
-    // debug!("Called agent {:?}", other.clone());
+    debug!("Called agent {:?}", other.clone());
 
     call_remote(
         other,
@@ -64,7 +64,7 @@ pub fn handle_cursor_moved((x, y): (f32, f32)) -> ExternResult<()> {
         None,
         payload.clone()
     )?;
-    // debug!("Called remote_update_for_ui with payload {:?}", payload);
+    // debug!("Called update_cursor_position with payload {:?}", payload);
   }
 
   Ok(())

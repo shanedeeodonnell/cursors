@@ -1,58 +1,65 @@
 import { LitElement, css, html } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
-import {
-  AppWebsocket,
-  ActionHash,
-  InstalledAppInfo,
-} from '@holochain/client';
-import { contextProvider } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
-
 import './components/cursors/cursors/create-cursor';
 import './components/cursors/cursors/cursor-detail';
-import { appWebsocketContext, appInfoContext } from './contexts';
+import { CursorBox } from './cursorBox';
+import { customElement, property, state } from 'lit/decorators.js';
+import { ProfilePrompt } from '@holochain-open-dev/profiles';
+import { ProfilesStore, ProfilesService, profilesStoreContext } from "@holochain-open-dev/profiles";
+import { contextProvided } from '@lit-labs/context';
+
+import { AppWebsocket } from '@holochain/client'
+import { ContextProvider } from '@lit-labs/context';
+import { HolochainClient, CellClient } from '@holochain-open-dev/cell-client';
+import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 
 @customElement('holochain-app')
-export class HolochainApp extends LitElement {
-  @state() loading = true;
-  @state() actionHash: ActionHash | undefined;
+export class HolochainApp extends ScopedElementsMixin(LitElement) {
 
-  @contextProvider({ context: appWebsocketContext })
   @property({ type: Object })
-  appWebsocket!: AppWebsocket;
+  @contextProvided({context: profilesStoreContext})
+  store!: ProfilesStore;
 
-  @contextProvider({ context: appInfoContext })
-  @property({ type: Object })
-  appInfo!: InstalledAppInfo;
+  @state() loaded = false;
 
   async firstUpdated() {
-    this.appWebsocket = await AppWebsocket.connect(
-      `ws://localhost:${process.env.HC_PORT}`
-    );
+    const appWs = await AppWebsocket.connect(`ws://localhost:${process.env.HC_PORT}`);
 
-    this.appInfo = await this.appWebsocket.appInfo({
-      installed_app_id: 'cursors',
-    });
+    const client = new HolochainClient(appWs);
 
-    this.loading = false;
+    const appInfo = await appWs.appInfo({
+      installed_app_id: 'test-app'
+    })
+    const cell = appInfo.cell_data.find(c => c.role_id === 'status');
+    console.log(appInfo, cell)
+
+    const cellClient = new CellClient(client, cell!);
+
+    const profilesStore = new ProfilesStore(new ProfilesService(cellClient));
+    new ContextProvider(this, profilesStoreContext, profilesStore);
+
+    this.loaded = true;
+    console.log("ProfilesStore pubkey: ", profilesStore.myAgentPubKey);
+
   }
 
   render() {
-    if (this.loading)
-      return html`
-        <mwc-circular-progress indeterminate></mwc-circular-progress>
-      `;
+    if (!this.loaded) return html`<span>Loading...</span>`;
 
     return html`
-      <main>
-        <h1>cursors</h1>
-
-        <create-cursor @cursor-created=${(e: CustomEvent) => this.actionHash = e.detail.actionHash}></create-cursor>
-    ${this.actionHash ? html`
-      <cursor-detail .actionHash=${this.actionHash}></cursor-detail>
-    ` : html``}
-      </main>
+      <profile-prompt>
+        <cursor-box>
+          <h1 style="background: lightblue;">This is an H1 that is using CursorBox</h1>
+        </cursor-box>
+      </profile-prompt>
     `;
+  }
+
+  static get scopedElements() {
+    return {
+      'cursor-box': CursorBox,
+      'profile-prompt': ProfilePrompt
+    };
   }
 
   static styles = css`
