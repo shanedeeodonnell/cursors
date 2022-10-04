@@ -28,9 +28,9 @@ export class HolochainApp extends ScopedElementsMixin(LitElement) {
     const client = new HolochainClient(appWs);
 
     const appInfo = await appWs.appInfo({
-      installed_app_id: 'test-app'
+      installed_app_id: 'cursors'
     })
-    const cell = appInfo.cell_data.find(c => c.role_id === 'status');
+    const cell = appInfo.cell_data.find(c => c.role_id === 'cursors');
     console.log(appInfo, cell)
 
     const cellClient = new CellClient(client, cell!);

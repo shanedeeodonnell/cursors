@@ -2,7 +2,6 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import {
   AppWebsocket,
-  ActionHash,
   InstalledAppInfo,
   AppSignalCb,
   AppSignal,
@@ -38,20 +37,28 @@ export class CursorBox extends ScopedElementsMixin(LitElement) {
   @query("#canvas")
   cursorBox!: HTMLElement;
 
+  @query("#icon")
+  icon!: HTMLElement;
+
   private signalCb: AppSignalCb = async (signal: AppSignal) => {
-    const message = signal.data.payload.message;
-    console.log(JSON.parse(message));
+    console.log("agent: ", signal.data.payload.agent);
+    console.log("x: ", signal.data.payload.x);
+    console.log("y: ", signal.data.payload.y);
+    const x = signal.data.payload.x;
+    const y = signal.data.payload.y;
+
+    const boundingBox = this.cursorBox.getBoundingClientRect();
+    this.icon.style.left = x * (boundingBox.right - boundingBox.left) + boundingBox.left  + 'px';
+    this.icon.style.top = y * (boundingBox.bottom - boundingBox.top) + boundingBox.top  + 'px';
   };
 
   private onMouseMove = async (event: MouseEvent) => {
     const boundingBox = this.cursorBox.getBoundingClientRect();
-    const x = event.clientX - boundingBox.left;
-    const y = event.clientY - boundingBox.top;
+    const x = (event.clientX - boundingBox.left) / (boundingBox.right - boundingBox.left);
+    const y = (event.clientY - boundingBox.top) / (boundingBox.bottom - boundingBox.top);
 
     const payload = [x, y];
     if (!this.wait) {
-      console.log('x: ', x / (boundingBox.right - boundingBox.left));
-      console.log('y: ', y / (boundingBox.bottom - boundingBox.top));
       await this.client.callZome(this.appInfo.cell_data[0].cell_id, "cursors", "handle_cursor_moved", payload);
       this.wait = true;
       setTimeout(() => {
@@ -85,6 +92,7 @@ export class CursorBox extends ScopedElementsMixin(LitElement) {
 
     return html`
       <div id="canvas" @mousemove=${(e:MouseEvent) => this.onMouseMove(e)}>
+        <img class="icon" id="icon" src="assets/cursor.png" width="24" height="24" />
         <slot >
         </slot>
       </div>
@@ -96,4 +104,15 @@ export class CursorBox extends ScopedElementsMixin(LitElement) {
       'mwc-circular-progress': CircularProgress
     };
   }
+
+  static styles = css`
+    .icon {
+      position:absolute;
+      transform:translate(-50%,-50%);
+      height:35px;
+      width:35px;
+      border-radius:50%;
+      border:2px solid pink;
+    }
+  `;
 }
